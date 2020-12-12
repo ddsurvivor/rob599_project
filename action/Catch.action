@@ -1,0 +1,8 @@
+# goal
+int32 command
+---
+# result
+bool final
+---
+# feedback
+string name
