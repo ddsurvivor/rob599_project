@@ -1,5 +1,5 @@
 # inputs
-int64 in
+int64 command
 ---
 # outputs
 int64 out

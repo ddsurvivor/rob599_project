@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 
 import rospy
 import sys
@@ -24,9 +24,8 @@ class ShowMarker:
 		rospy.loginfo('/show_house Service started')
 
 		self.goods_pose = self.load_data('goods_pose.txt')
-		print(self.goods_pose)
+		rospy.loginfo(self.goods_pose)
 		self.house_point = self.load_data('house_point.txt')
-		print(len(self.house_point))
 
 	def goods_callback(self, msg):
 		markerArray = MarkerArray()
@@ -40,8 +39,14 @@ class ShowMarker:
 			marker.scale.z = 0.5
 			marker.color.a = 1.0
 			marker.color.r = 0.0
-			marker.color.g = 1.0
-			marker.color.b = 0.0
+
+			if msg.command == 0:			
+				marker.color.g = 1.0
+				marker.color.b = 0.0
+			else:
+				marker.color.g = 1.0 - self.goods_pose[i][2]
+				marker.color.b = 0.0 + self.goods_pose[i][2]
+
 			marker.pose.orientation.w = 1.0
 			marker.pose.position.x = self.goods_pose[i][0]
 			marker.pose.position.y = self.goods_pose[i][1]
@@ -74,7 +79,6 @@ class ShowMarker:
 			point = Point()
 			point.x = self.house_point[i][0]
 			point.y = self.house_point[i][1]
-			print(i)
 			line.points.append(point)
 
 		line.pose.orientation.w = 1.0
@@ -83,6 +87,31 @@ class ShowMarker:
 
 		marker_publisher.publish(line)
 
+		# publish another warehouse
+		if msg.command == 1:
+			line = Marker()
+			line.header.frame_id ='/map'
+			line.type = line.LINE_STRIP
+			line.action = line.ADD
+
+			line.scale.x = 0.1
+			line.color.r = 0.0
+			line.color.g = 0.0
+			line.color.b = 1.0
+			line.color.a = 1.0
+			for i in range(len(self.house_point)):
+				point = Point()
+				point.x = self.house_point[i][0]
+				point.y = self.house_point[i][1] - 2.5
+				line.points.append(point)
+
+			line.pose.orientation.w = 1.0
+
+			marker_publisher = rospy.Publisher('house_line2', Marker, queue_size=10)
+
+			marker_publisher.publish(line)
+				
+
 		return ShowHouseResponse(True)
 
 	def load_data(self, filename):
@@ -90,7 +119,7 @@ class ShowMarker:
 		f = open(path, 'r')
 		data = eval(f.read())
 		f.close()
-		print('load position')
+		rospy.loginfo('load data {0}'.format(filename))
 		return data		
 
 

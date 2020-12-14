@@ -26,10 +26,13 @@ class Robot:
 	def __init__(self):
 		self.pkg_dir = rospkg.RosPack().get_path('rob599_project')
 
+		# some initial values
 		self.active_callback = None
 		self.feedback_callback = None
 		self.done_callback = None
 		self.index = 10
+		self.sort_index = [0,0]
+		self.start_pub = False
 
 		# Make an action client, and wait for the server.
 		self.client = actionlib.SimpleActionClient('move_base', MoveBaseAction)
@@ -55,16 +58,15 @@ class Robot:
 		# publish goods markers
 		self.publisher = rospy.Publisher('goods_box_array', MarkerArray, queue_size = 10)
 
-		amcl_sub = rospy.Subscriber('/amcl_pose', PoseWithCovarianceStamped, self.pose_callback)
+		# get robot location in /map
+		self.amcl_sub = rospy.Subscriber('/amcl_pose', PoseWithCovarianceStamped, self.pose_callback)
 
-
+		# load data from files
 		self.house_pose = self.load_data('house_pose.txt')
 		self.goods_pose = self.load_data('goods_pose.txt')
+		rospy.loginfo(self.goods_pose)
 		self.house_point = self.load_data('house_point.txt')
 
-		self.set_goods_markers()
-
-		
 
 	# Load goods position from file
 	def load_data(self, filename):
@@ -93,8 +95,26 @@ class Robot:
 			_theta = 0
 			self.set_goal(_x, _y, _theta)
 		elif target == 'house':
-			_x = self.house_pose[index][0]-0.5
-			_y = self.house_pose[index][1]
+			if self.mode == 1:
+				if self.goods_pose[index][2] == 0:
+					_x = self.house_pose[self.sort_index[0]][0] - 0.5
+					_y = self.house_pose[self.sort_index[0]][1]
+					self.sort_index[0]+=1
+				elif self.goods_pose[index][2] == 1:
+					_x = self.house_pose[self.sort_index[1]][0] - 0.5
+					_y = self.house_pose[self.sort_index[1]][1] - 2.5
+					self.sort_index[1]+=1
+
+			elif self.mode == 2:
+				layer = self.goods_pose[index][2]
+				_x = self.house_pose[self.sort_index[layer]][0] - 0.5
+				_y = self.house_pose[self.sort_index[layer]][1]
+				self.sort_index[layer]+=1
+			
+			else:				
+				_y = self.house_pose[index][1]
+
+			
 			_theta = 0
 			self.set_goal(_x, _y, _theta)
 
@@ -144,10 +164,12 @@ class Robot:
 		self.drop()
 
 	def pick_callback(self, goal):
-		if goal.mode == 0:
-			for i in range(len(self.goods_pose)):
-				self.index = i
-				self.robot_pick(self.index)
+		self.mode = goal.mode
+		rospy.loginfo(self.mode)
+		self.set_goods_markers(goal.mode)	
+		for i in range(len(self.goods_pose)):
+			self.index = i
+			self.robot_pick(self.index)
 		
 		self.server.set_succeeded(PickResult(final = True))
 
@@ -171,8 +193,11 @@ class Robot:
 					m.pose.position.x = self.robot_pose[0]+0.5
 					m.pose.position.y = self.robot_pose[1]
 					rate = rospy.Rate(10.0)
+					speed = 0.1
+					if self.goods_pose[self.index][2] == 1 and self.mode == 2:
+						speed = 0.05
 					for i in range(1,10):
-						m.pose.position.z = m.pose.position.z - 0.1
+						m.pose.position.z = m.pose.position.z - speed
 						rate.sleep()	
 		self.catch_server.set_succeeded(CatchResult(final = True))
 
@@ -185,7 +210,7 @@ class Robot:
 		return
 
 
-	def set_goods_markers(self):
+	def set_goods_markers(self, mode):
 		self.markerArray = MarkerArray()
 		for i in range(len(self.goods_pose)):
 			marker = Marker()
@@ -196,9 +221,15 @@ class Robot:
 			marker.scale.y = 0.5
 			marker.scale.z = 0.5
 			marker.color.a = 1.0
+
+			if mode == 0:			
+				marker.color.g = 1.0
+				marker.color.b = 0.0
+			else:
+				marker.color.g = 1.0 - self.goods_pose[i][2]
+				marker.color.b = 0.0 + self.goods_pose[i][2]
+
 			marker.color.r = 0.0
-			marker.color.g = 1.0
-			marker.color.b = 0.0
 			marker.pose.orientation.w = 1.0
 
 			marker.pose.position.x = self.goods_pose[i][0]
@@ -211,13 +242,13 @@ class Robot:
 			for m in self.markerArray.markers:
 				m.id = id
 				id += 1
-		
+		self.start_pub = True
 
 if __name__ == '__main__':
 	rospy.init_node('robot_navigation', argv=sys.argv)
 	robot = Robot()
 	while not rospy.is_shutdown():
 		rate = rospy.Rate(10.0)
-		
-		robot.publisher.publish(robot.markerArray)
+		if robot.start_pub:
+			robot.publisher.publish(robot.markerArray)
 		rate.sleep()

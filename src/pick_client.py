@@ -1,6 +1,4 @@
-#!/usr/bin/env python3
-
-
+#!/usr/bin/env python
 
 import rospy
 import actionlib
@@ -36,7 +34,8 @@ if __name__ == '__main__':
 
 
 	goal = PickGoal()
-	goal.mode = 0  # set a goal to as mode 0
+	goal.mode = rospy.get_param('task_mode')  # set a goal to as mode 0
+	print(goal.mode)
 
 	pick_client.send_goal(goal, done_cb=done_callback, active_cb=active_callback, feedback_cb=feedback_callback)
 	pick_client.wait_for_result()

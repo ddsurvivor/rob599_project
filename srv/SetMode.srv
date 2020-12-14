@@ -1,5 +1,5 @@
 # inputs
-int64 commond
+int64 command
 ---
 # outputs
 bool saved
