@@ -10,6 +10,7 @@
 This project mainly realizes a logistics robot that automatically carries goods, which can neatly palletize the scattered goods into the warehouse.
 
 Introduction video: https://www.youtube.com/watch?v=RK5siRriUDg
+
 Video for other task: https://www.youtube.com/watch?v=MTZtKg0TrGQ  
 
 
