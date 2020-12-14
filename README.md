@@ -9,7 +9,27 @@
 
 This project mainly realizes a logistics robot that automatically carries goods, which can neatly palletize the scattered goods into the warehouse.
 
-Introduction video: https://www.youtube.com/watch?v=RK5siRriUDg&feature=youtu.be 
+Introduction video: https://www.youtube.com/watch?v=RK5siRriUDg
+Video for other task: https://www.youtube.com/watch?v=MTZtKg0TrGQ  
+
+
+## Project Mission
+
+1. Drive robot to target position function. [5 pts]
+
+2. Service node to randomly generate goods and set task mode. [5 pts]
+
+3. Detection warehouse, using marker to display, save and read data by txt files. [5 pts]
+
+4. Navigation point calculation to goods point. [5 pts]
+
+5. Pick goods function for one goods include move, catch and drop action sequence. Within Pick Action which is a loop for pick all  goods. [10 pts]
+
+6. Basic Task: Palletize all scattered goods correctly in the area. [ 10 pts ]
+
+7. Sort Task: Green goods are placed in the green area, blue goods are placed in the blue area. [ 10 pts ]
+
+8. Layer Task: Green goods on the lower level, Blue goods on the upper level. [10 pts]
 
 ## Step
 
@@ -33,3 +53,7 @@ Pre-build rviz file is inside of the project folder, you need to run rviz and op
 2. The files folder have goods data, and script using “rospkg” to access it, make sure you put project folder in right place.
 
 3. The robot movement uses move base action, which is a function of ROS, so it may be a little slow when it running.
+
+4. You can use service call and put in 1 or 2 to start “Sort Task” and “Layer Task”, then you need to restart robot_navigation.py script and restart client script.
+
+5. The /set_mode service call might need to run twice to display well in rviz.
